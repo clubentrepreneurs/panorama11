@@ -5,7 +5,7 @@
     <title>GLB + cercles + panorama + menu</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <link href="https://fonts.cdnfonts.com/css/apex-new" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+    
     <style>
         html, body {
             margin: 0;
@@ -22,28 +22,26 @@
             background-color: transparent !important;
         }
 
-        /* AJOUT : Le canvas est caché au début pour éviter un flash */
+        /* Le canvas est caché au début pour éviter un flash */
         #renderCanvas.hidden {
             visibility: hidden;
         }
 
-        /* === Styles pour l'animation Lottie d'introduction === */
-        #lottie-container {
+        /* === Styles pour la vidéo d'introduction === */
+        #video-intro {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            object-fit: cover; /* S'assure que la vidéo couvre toute la zone */
             background-color: white; /* ou la couleur de votre fond */
             z-index: 9999; /* S'assure qu'il est au-dessus de tout */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: block;
             transition: opacity 1s ease-in-out;
         }
-        #lottie-container.fade-out {
+        #video-intro.fade-out {
             opacity: 0;
-            /* Empêche les interactions pendant le fade-out */
             pointer-events: none;
         }
 
@@ -262,10 +260,15 @@
     </style>
 </head>
 <body>
-    <div id="lottie-container"></div>
-    <canvas id="renderCanvas" class="hidden"></canvas> <div id="customText">
+    
+    <video id="video-intro" autoplay muted playsinline>
+        <source src="intro.mp4" type="video/mp4">
+        Votre navigateur ne supporte pas la vidéo.
+    </video>
+    
+    <canvas id="renderCanvas" class="hidden"></canvas> 
+    <div id="customText">
         <br>
-        
     </div>
 
     <div id="menu-container">
@@ -343,18 +346,6 @@
                 domeMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
                 domeMat.backFaceCulling = false;
                 domeMat.needDepthPrePass = true;
-            }
-        }
-
-        // Variable pour suivre l'état de l'animation Lottie
-        let lottieAnimationComplete = false;
-        
-        // Fonction pour vérifier si tout est prêt et démarrer l'intro du panorama
-        function checkAndStartPanoramaIntro() {
-            if (panoLoaded && lottieAnimationComplete) {
-                // Rendre le canvas visible juste avant l'animation de la caméra
-                canvas.classList.remove('hidden');
-                animateCameraSpin();
             }
         }
 
@@ -478,33 +469,35 @@
             customText.classList.toggle("zoomed");
         });
 
-        // Le code Lottie est le premier à s'exécuter
+        // Variable pour suivre l'état de l'intro vidéo
+        let videoAnimationComplete = false;
+        
+        // Fonction pour vérifier si tout est prêt et démarrer l'intro du panorama
+        function checkAndStartPanoramaIntro() {
+            if (panoLoaded && videoAnimationComplete) {
+                // Rendre le canvas visible juste avant l'animation de la caméra
+                canvas.classList.remove('hidden');
+                animateCameraSpin();
+            }
+        }
+        
+        // Le code de la vidéo est le premier à s'exécuter
         document.addEventListener("DOMContentLoaded", () => {
-            const lottieContainer = document.getElementById('lottie-container');
+            const videoIntro = document.getElementById('video-intro');
 
-            const anim = lottie.loadAnimation({
-                container: lottieContainer,
-                renderer: 'svg',
-                loop: false,
-                autoplay: true,
-                path: 'intro.json', // REMPLACEZ 'intro.json' par le nom de votre fichier JSON
-                rendererSettings: {
-                    preserveAspectRatio: 'xMidYMid slice'
-                }
-            });
-
-            anim.addEventListener('complete', () => {
-                lottieAnimationComplete = true; // Marquer le Lottie comme terminé
-                lottieContainer.classList.add('fade-out'); // Déclencher le fondu CSS
+            // L'événement 'onended' est déclenché quand la vidéo est terminée
+            videoIntro.onended = () => {
+                videoAnimationComplete = true; // Marquer la vidéo comme terminée
+                videoIntro.classList.add('fade-out'); // Déclencher le fondu CSS
                 
-                // Le `setTimeout` reste pour masquer complètement le conteneur Lottie
+                // Le `setTimeout` reste pour masquer complètement la vidéo
                 setTimeout(() => {
-                    lottieContainer.style.display = 'none';
+                    videoIntro.style.display = 'none';
                 }, 1000);
                 
                 // Immédiatement vérifier et démarrer l'animation si le panorama est prêt
                 checkAndStartPanoramaIntro();
-            });
+            };
 
             // Ajout de l'écouteur d'événement pour le bouton de défilement
             const scrollButton = document.getElementById('scrollButton');
